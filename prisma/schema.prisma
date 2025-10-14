@@ -1,0 +1,78 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Admin {
+  id        String   @id @default(uuid())
+  username  String   @unique
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  Chat      Chat[]
+
+  @@map("admin")
+}
+
+model Customer {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("customer")
+}
+
+model Chat {
+  id            String     @id @default(uuid())
+  sessionId     String     @unique
+  customerId    String
+  customerName  String?
+  customerEmail String?
+  status        ChatStatus @default(ACTIVE)
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  lastMessageAt DateTime?
+
+  messages Message[]
+  adminId  String?
+  admin    Admin?    @relation(fields: [adminId], references: [id])
+
+  @@map("chat")
+}
+
+model Message {
+  id        String        @id @default(uuid())
+  chatId    String
+  content   String
+  sender    MessageSender
+  senderId  String?
+  createdAt DateTime      @default(now())
+  isRead    Boolean       @default(false)
+  metadata  Json?
+
+  chat Chat @relation(fields: [chatId], references: [id], onDelete: Cascade)
+
+  @@map("message")
+}
+
+enum ChatStatus {
+  ACTIVE
+  CLOSED
+  ARCHIVED
+}
+
+enum MessageSender {
+  CUSTOMER
+  ADMIN
+  SYSTEM
+}
